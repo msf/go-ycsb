@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -213,10 +214,7 @@ func (db *s3DB) Scan(ctx context.Context, table string, startKey string, count i
 	remaining := count - len(results)
 
 	for remaining > 0 {
-		maxKeys := int32(remaining)
-		if maxKeys > 1000 {
-			maxKeys = 1000
-		}
+		maxKeys := min(int32(remaining), 1000)
 
 		out, err := db.client.ListObjectsV2(ctx, &awss3.ListObjectsV2Input{
 			Bucket:            &db.bucket,
@@ -279,9 +277,7 @@ func (db *s3DB) Update(ctx context.Context, table string, key string, values map
 		if existing == nil {
 			existing = make(map[string][]byte)
 		}
-		for k, v := range values {
-			existing[k] = v
-		}
+		maps.Copy(existing, values)
 		return db.Insert(ctx, table, key, existing)
 	}
 

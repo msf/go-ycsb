@@ -16,6 +16,7 @@ package tikv
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/tikv/client-go/v2/txnkv"
@@ -201,9 +202,7 @@ func (db *txnDB) Update(ctx context.Context, table string, key string, values ma
 		return err
 	}
 
-	for field, value := range values {
-		data[field] = value
-	}
+	maps.Copy(data, values)
 
 	buf := db.bufPool.Get()
 	defer func() {

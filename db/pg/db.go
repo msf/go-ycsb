@@ -116,7 +116,7 @@ func (db *pgDB) createTable() error {
 	s := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (YCSB_KEY VARCHAR(64) PRIMARY KEY", tableName)
 	buf.WriteString(s)
 
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		buf.WriteString(fmt.Sprintf(", FIELD%d VARCHAR(%d)", i, fieldLength))
 	}
 
@@ -196,7 +196,7 @@ func (db *pgDB) clearCacheIfFailed(ctx context.Context, query string, err error)
 	delete(state.stmtCache, query)
 }
 
-func (db *pgDB) queryRows(ctx context.Context, query string, count int, args ...interface{}) ([]map[string][]byte, error) {
+func (db *pgDB) queryRows(ctx context.Context, query string, count int, args ...any) ([]map[string][]byte, error) {
 	if db.verbose {
 		fmt.Printf("%s %v\n", query, args)
 	}
@@ -219,8 +219,8 @@ func (db *pgDB) queryRows(ctx context.Context, query string, count int, args ...
 	vs := make([]map[string][]byte, 0, count)
 	for rows.Next() {
 		m := make(map[string][]byte, len(cols))
-		dest := make([]interface{}, len(cols))
-		for i := 0; i < len(cols); i++ {
+		dest := make([]any, len(cols))
+		for i := range cols {
 			v := new([]byte)
 			dest[i] = v
 		}
@@ -272,7 +272,7 @@ func (db *pgDB) Scan(ctx context.Context, table string, startKey string, count i
 	return rows, err
 }
 
-func (db *pgDB) execQuery(ctx context.Context, query string, args ...interface{}) error {
+func (db *pgDB) execQuery(ctx context.Context, query string, args ...any) error {
 	if db.verbose {
 		fmt.Printf("%s %v\n", query, args)
 	}
@@ -297,7 +297,7 @@ func (db *pgDB) Update(ctx context.Context, table string, key string, values map
 	buf.WriteString(table)
 	buf.WriteString(" SET ")
 	firstField := true
-	args := make([]interface{}, 0, len(values)+1)
+	args := make([]any, 0, len(values)+1)
 	placeHolderIndex := 1
 	pairs := util.NewFieldPairs(values)
 	for _, p := range pairs {
@@ -319,7 +319,7 @@ func (db *pgDB) Update(ctx context.Context, table string, key string, values map
 }
 
 func (db *pgDB) Insert(ctx context.Context, table string, key string, values map[string][]byte) error {
-	args := make([]interface{}, 0, 1+len(values))
+	args := make([]any, 0, 1+len(values))
 	args = append(args, key)
 
 	buf := bytes.NewBuffer(db.bufPool.Get())
@@ -338,7 +338,7 @@ func (db *pgDB) Insert(ctx context.Context, table string, key string, values map
 	}
 	buf.WriteString(") VALUES ($1")
 
-	for i := 0; i < len(pairs); i++ {
+	for i := range pairs {
 		buf.WriteString(fmt.Sprintf(" ,$%d", i+2))
 	}
 

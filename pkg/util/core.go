@@ -26,7 +26,7 @@ import (
 func createFieldIndices(p *properties.Properties) map[string]int64 {
 	fieldCount := p.GetInt64(prop.FieldCount, prop.FieldCountDefault)
 	m := make(map[string]int64, fieldCount)
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		field := fmt.Sprintf("field%d", i)
 		m[field] = i
 	}
@@ -37,7 +37,7 @@ func createFieldIndices(p *properties.Properties) map[string]int64 {
 func allFields(p *properties.Properties) []string {
 	fieldCount := p.GetInt64(prop.FieldCount, prop.FieldCountDefault)
 	fields := make([]string, 0, fieldCount)
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		field := fmt.Sprintf("field%d", i)
 		fields = append(fields, field)
 	}

@@ -16,6 +16,7 @@ package tikv
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/magiconair/properties"
@@ -135,9 +136,7 @@ func (db *rawDB) Update(ctx context.Context, table string, key string, values ma
 		return err
 	}
 
-	for field, value := range values {
-		data[field] = value
-	}
+	maps.Copy(data, values)
 
 	// Update data and use Insert to overwrite.
 	return db.Insert(ctx, table, key, data)

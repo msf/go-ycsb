@@ -311,7 +311,7 @@ func (c *core) DoBatchInsert(ctx context.Context, batchSize int, db ycsb.DB) err
 	r := state.r
 	var keys []string
 	var values []map[string][]byte
-	for i := 0; i < batchSize; i++ {
+	for range batchSize {
 		keyNum := c.keySequence.Next(r)
 		dbKey := c.buildKeyName(keyNum)
 		keys = append(keys, dbKey)
@@ -539,7 +539,7 @@ func (c *core) doBatchTransactionRead(ctx context.Context, batchSize int, db ycs
 	}
 
 	keys := make([]string, batchSize)
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		keys[i] = c.buildKeyName(c.nextKeyNum(state))
 	}
 
@@ -556,7 +556,7 @@ func (c *core) doBatchTransactionInsert(ctx context.Context, batchSize int, db y
 	r := state.r
 	keys := make([]string, batchSize)
 	values := make([]map[string][]byte, batchSize)
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		keyNum := c.transactionInsertKeySequence.Next(r)
 		keyName := c.buildKeyName(keyNum)
 		keys[i] = keyName
@@ -580,7 +580,7 @@ func (c *core) doBatchTransactionInsert(ctx context.Context, batchSize int, db y
 func (c *core) doBatchTransactionUpdate(ctx context.Context, batchSize int, db ycsb.BatchDB, state *coreState) error {
 	keys := make([]string, batchSize)
 	values := make([]map[string][]byte, batchSize)
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		keyNum := c.nextKeyNum(state)
 		keyName := c.buildKeyName(keyNum)
 		keys[i] = keyName
@@ -693,7 +693,7 @@ func (coreCreator) Create(p *properties.Properties) (ycsb.Workload, error) {
 
 	fieldLength := p.GetInt64(prop.FieldLength, prop.FieldLengthDefault)
 	c.valuePool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return make([]byte, fieldLength)
 		},
 	}

@@ -3,7 +3,7 @@ package minio
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 
 	"github.com/magiconair/properties"
 	"github.com/minio/minio-go"
@@ -62,7 +62,7 @@ func (db *minioDB) Read(ctx context.Context, table string, key string, fields []
 		return nil, err
 	}
 	defer obj.Close()
-	bs, err := ioutil.ReadAll(obj)
+	bs, err := io.ReadAll(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (db *minioDB) Scan(ctx context.Context, table string, startKey string, coun
 	defer close(done)
 	ch := db.db.ListObjectsV2(table, startKey, true, done)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		obj, ok := <-ch
 		if !ok {
 			break

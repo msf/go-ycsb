@@ -67,11 +67,11 @@ func RenderJson(w io.Writer, headers []string, values [][]string) {
 }
 
 // IntToString formats int value to string
-func IntToString(i interface{}) string {
+func IntToString(i any) string {
 	return fmt.Sprintf("%d", i)
 }
 
 // FloatToOneString formats float into string with one digit after dot
-func FloatToOneString(f interface{}) string {
+func FloatToOneString(f any) string {
 	return fmt.Sprintf("%.1f", f)
 }

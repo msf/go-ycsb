@@ -205,7 +205,7 @@ func (c *Client) Run(ctx context.Context) {
 		}
 	}()
 
-	for i := 0; i < threadCount; i++ {
+	for i := range threadCount {
 		go func(threadId int) {
 			defer wg.Done()
 

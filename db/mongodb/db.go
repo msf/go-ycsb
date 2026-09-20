@@ -8,7 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/pingcap/go-ycsb/pkg/prop"
-	"io/ioutil"
+	"os"
+
 	"log"
 	"strings"
 
@@ -142,7 +143,7 @@ func (c mongodbCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 	cliOpts := options.Client().ApplyURI(uri)
 	if cliOpts.TLSConfig != nil {
 		if len(connString.Hosts) > 0 {
-			servername := strings.Split(connString.Hosts[0], ":")[0]
+			servername, _, _ := strings.Cut(connString.Hosts[0], ":")
 			log.Printf("using server name for tls: %s\n", servername)
 			cliOpts.TLSConfig.ServerName = servername
 		}
@@ -153,7 +154,7 @@ func (c mongodbCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 
 		if caFile != "" {
 			// Load CA cert
-			caCert, err := ioutil.ReadFile(caFile)
+			caCert, err := os.ReadFile(caFile)
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -73,7 +73,7 @@ func (h *histogram) Summary() []string {
 	}
 }
 
-func (h *histogram) getInfo() map[string]interface{} {
+func (h *histogram) getInfo() map[string]any {
 	min := h.hist.Min()
 	max := h.hist.Max()
 	avg := int64(h.hist.Mean())
@@ -91,7 +91,7 @@ func (h *histogram) getInfo() map[string]interface{} {
 
 	elapsed := time.Now().Sub(h.startTime).Seconds()
 	qps := float64(count) / elapsed
-	res := make(map[string]interface{})
+	res := make(map[string]any)
 	res[ELAPSED] = elapsed
 	res[COUNT] = count
 	res[QPS] = qps

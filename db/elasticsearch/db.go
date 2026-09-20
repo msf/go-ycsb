@@ -312,7 +312,7 @@ func (c elasticCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 		res.Body.Close()
 
 		// Define index mapping.
-		mapping := map[string]interface{}{"settings": map[string]interface{}{"index": map[string]interface{}{"number_of_shards": elasticShardCount, "number_of_replicas": elasticReplicaCount}}}
+		mapping := map[string]any{"settings": map[string]any{"index": map[string]any{"number_of_shards": elasticShardCount, "number_of_replicas": elasticReplicaCount}}}
 		data, err := json.Marshal(mapping)
 		if err != nil {
 			if verbose {

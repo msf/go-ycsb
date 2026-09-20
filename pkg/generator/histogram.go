@@ -31,7 +31,8 @@
 package generator
 
 import (
-	"io/ioutil"
+	"os"
+
 	"math/rand"
 	"strconv"
 	"strings"
@@ -75,7 +76,7 @@ type bucketInfo struct {
 
 // NewHistogramFromFile creates a Histogram generator from file.
 func NewHistogramFromFile(name string) *Histogram {
-	data, err := ioutil.ReadFile(name)
+	data, err := os.ReadFile(name)
 	if err != nil {
 		util.Fatalf("load histogram file %s failed %v", name, err)
 	}

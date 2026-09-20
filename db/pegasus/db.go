@@ -156,7 +156,7 @@ func (pegasusCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 	db := &pegasusDB{}
 	db.sessions = make([]pegasus.TableConnector, threadCount)
 	c := pegasus2.NewClient(cfg)
-	for i := 0; i < threadCount; i++ {
+	for i := range threadCount {
 
 		var err error
 		timeoutCtx, _ := context.WithTimeout(context.Background(), RequestTimeout)

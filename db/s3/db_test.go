@@ -73,7 +73,7 @@ func TestScan(t *testing.T) {
 
 	ctx := context.Background()
 	table := "tbl"
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		key := "key" + string(rune('A'+i))
 		val := map[string][]byte{"k": {byte(i)}}
 
@@ -97,7 +97,7 @@ func TestScanKeysOnly(t *testing.T) {
 
 	ctx := context.Background()
 	table := "tbl"
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		key := "key" + string(rune('A'+i))
 		val := map[string][]byte{"k": {byte(i)}}
 
@@ -114,7 +114,7 @@ func TestScanKeysOnly(t *testing.T) {
 	if len(res) != 3 {
 		t.Fatalf("expected 3 results, got %d", len(res))
 	}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		key := "key" + string(rune('A'+i))
 		if _, ok := res[i][key]; !ok {
 			t.Fatalf("expected key %s in result, got %v", key, res[i])

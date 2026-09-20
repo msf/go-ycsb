@@ -111,7 +111,7 @@ func (db *cassandraDB) createTable() error {
 	fieldCount := db.p.GetInt64(prop.FieldCount, prop.FieldCountDefault)
 
 	db.fieldNames = make([]string, fieldCount)
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		db.fieldNames[i] = fmt.Sprintf("field%d", i)
 	}
 
@@ -119,7 +119,7 @@ func (db *cassandraDB) createTable() error {
 	s := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s.%s (YCSB_KEY VARCHAR PRIMARY KEY", db.keySpace, tableName)
 	buf.WriteString(s)
 
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		buf.WriteString(fmt.Sprintf(", FIELD%d VARCHAR", i))
 	}
 
@@ -163,7 +163,7 @@ func (db *cassandraDB) Read(ctx context.Context, table string, key string, field
 	}
 
 	m := make(map[string][]byte, len(fields))
-	dest := make([]interface{}, len(fields))
+	dest := make([]any, len(fields))
 	for i := 0; i < len(fields); i++ {
 		v := new([]byte)
 		dest[i] = v
@@ -187,7 +187,7 @@ func (db *cassandraDB) Scan(ctx context.Context, table string, startKey string, 
 	return nil, fmt.Errorf("scan is not supported")
 }
 
-func (db *cassandraDB) execQuery(ctx context.Context, query string, args ...interface{}) error {
+func (db *cassandraDB) execQuery(ctx context.Context, query string, args ...any) error {
 	if db.verbose {
 		fmt.Printf("%s %v\n", query, args)
 	}
@@ -207,7 +207,7 @@ func (db *cassandraDB) Update(ctx context.Context, table string, key string, val
 	buf.WriteString(" SET ")
 	firstField := true
 	pairs := util.NewFieldPairs(values)
-	args := make([]interface{}, 0, len(values)+1)
+	args := make([]any, 0, len(values)+1)
 	for _, p := range pairs {
 		if firstField {
 			firstField = false
@@ -227,7 +227,7 @@ func (db *cassandraDB) Update(ctx context.Context, table string, key string, val
 }
 
 func (db *cassandraDB) Insert(ctx context.Context, table string, key string, values map[string][]byte) error {
-	args := make([]interface{}, 0, 1+len(values))
+	args := make([]any, 0, 1+len(values))
 	args = append(args, key)
 
 	buf := bytes.NewBuffer(db.bufPool.Get())
@@ -247,7 +247,7 @@ func (db *cassandraDB) Insert(ctx context.Context, table string, key string, val
 	}
 	buf.WriteString(") VALUES (?")
 
-	for i := 0; i < len(pairs); i++ {
+	for range pairs {
 		buf.WriteString(" ,?")
 	}
 

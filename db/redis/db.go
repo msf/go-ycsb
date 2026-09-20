@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -25,10 +26,10 @@ const HMGET string = "HMGET"
 
 type redisClient interface {
 	Get(ctx context.Context, key string) *goredis.StringCmd
-	Do(ctx context.Context, args ...interface{}) *goredis.Cmd
+	Do(ctx context.Context, args ...any) *goredis.Cmd
 	Pipeline() goredis.Pipeliner
 	Scan(ctx context.Context, cursor uint64, match string, count int64) *goredis.ScanCmd
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *goredis.StatusCmd
+	Set(ctx context.Context, key string, value any, expiration time.Duration) *goredis.StatusCmd
 	Del(ctx context.Context, keys ...string) *goredis.IntCmd
 	FlushDB(ctx context.Context) *goredis.StatusCmd
 	Close() error
@@ -75,7 +76,7 @@ func (r *redis) Read(ctx context.Context, table string, key string, fields []str
 			data[fieldName] = []byte(s)
 		}
 	case HASH_DATATYPE:
-		args := make([]interface{}, 0, len(fields)+2)
+		args := make([]any, 0, len(fields)+2)
 		args = append(args, HMGET, getKeyName(table, key))
 		for _, fieldName := range fields {
 			args = append(args, fieldName)
@@ -134,7 +135,7 @@ func (r *redis) Update(ctx context.Context, table string, key string, values map
 			}
 		}
 	case HASH_DATATYPE:
-		args := make([]interface{}, 0, 2*len(values)+2)
+		args := make([]any, 0, 2*len(values)+2)
 		args = append(args, HSET, getKeyName(table, key))
 		for fieldName, bytes := range values {
 			args = append(args, fieldName, string(bytes))
@@ -173,9 +174,7 @@ func mergeEncodedJsonWithMap(stringReply string, values map[string][]byte) (err 
 	if err != nil {
 		return
 	}
-	for k, v := range values {
-		curVal[k] = v
-	}
+	maps.Copy(curVal, values)
 	data, err = json.Marshal(curVal)
 	return
 }
@@ -201,7 +200,7 @@ func (r *redis) Insert(ctx context.Context, table string, key string, values map
 	case JSON_DATATYPE:
 		err = r.client.Do(ctx, JSON_SET, getKeyName(table, key), ".", string(data)).Err()
 	case HASH_DATATYPE:
-		args := make([]interface{}, 0, 2*len(values)+2)
+		args := make([]any, 0, 2*len(values)+2)
 		args = append(args, HSET, getKeyName(table, key))
 		for fieldName, bytes := range values {
 			args = append(args, fieldName, string(bytes))

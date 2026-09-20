@@ -105,15 +105,15 @@ func Summary() {
 // EnableWarmUp sets whether to enable warm-up.
 func EnableWarmUp(b bool) {
 	if b {
-		atomic.StoreInt32(&warmUp, 1)
+		warmUp.Store(1)
 	} else {
-		atomic.StoreInt32(&warmUp, 0)
+		warmUp.Store(0)
 	}
 }
 
 // IsWarmUpFinished returns whether warm-up is finished or not.
 func IsWarmUpFinished() bool {
-	return atomic.LoadInt32(&warmUp) == 0
+	return warmUp.Load() == 0
 }
 
 // Measure measures the operation.
@@ -124,4 +124,4 @@ func Measure(op string, start time.Time, lan time.Duration) {
 }
 
 var globalMeasure *measurement
-var warmUp int32 // use as bool, 1 means in warmup progress, 0 means warmup finished.
+var warmUp atomic.Int32 // use as bool, 1 means in warmup progress, 0 means warmup finished.

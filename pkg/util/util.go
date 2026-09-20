@@ -21,14 +21,14 @@ import (
 )
 
 // Fatalf prints the message and exits the program.
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, format, args...)
 	fmt.Println("")
 	os.Exit(1)
 }
 
 // Fatal prints the message and exits the program.
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	fmt.Fprint(os.Stderr, args...)
 	fmt.Println("")
 	os.Exit(1)
@@ -51,7 +51,7 @@ type BufPool struct {
 // NewBufPool creates a buffer pool.
 func NewBufPool() *BufPool {
 	p := &sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return []byte(nil)
 		},
 	}

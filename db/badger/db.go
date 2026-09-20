@@ -16,6 +16,7 @@ package badger
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 
 	"github.com/dgraph-io/badger"
@@ -26,7 +27,7 @@ import (
 	"github.com/pingcap/go-ycsb/pkg/ycsb"
 )
 
-//  properties
+// properties
 const (
 	badgerDir                     = "badger.dir"
 	badgerValueDir                = "badger.valuedir"
@@ -213,9 +214,7 @@ func (db *badgerDB) Update(ctx context.Context, table string, key string, values
 			return err
 		}
 
-		for field, value := range values {
-			data[field] = value
-		}
+		maps.Copy(data, values)
 
 		buf := db.bufPool.Get()
 		defer func() {

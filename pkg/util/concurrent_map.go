@@ -28,7 +28,7 @@ func New(shardCount int) ConcurrentMap {
 	m := new(ConcurrentMap)
 	m.shardCount = shardCount
 	m.shards = make([]*ConcurrentMapShared, shardCount)
-	for i := 0; i < shardCount; i++ {
+	for i := range shardCount {
 		m.shards[i] = &ConcurrentMapShared{items: make(map[int]int64)}
 	}
 	return *m
@@ -295,7 +295,7 @@ func (m ConcurrentMap) Keys() []int {
 	return keys
 }
 
-//Reviles ConcurrentMap "private" variables to json marshal.
+// Reviles ConcurrentMap "private" variables to json marshal.
 func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 	// Create a temporary map, which will hold all item spread across shards.
 	tmp := make(map[int]int64)

@@ -137,8 +137,7 @@ func (r *dynamodbWrapper) tableExists() (bool, error) {
 		context.TODO(), &dynamodb.DescribeTableInput{TableName: r.tablename},
 	)
 	if err != nil {
-		var notFoundEx *types.ResourceNotFoundException
-		if errors.As(err, &notFoundEx) {
+		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
 			log.Printf("Table %v does not exist.\n", *r.tablename)
 			err = nil
 		} else {

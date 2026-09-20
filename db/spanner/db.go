@@ -194,7 +194,7 @@ func (db *spannerDB) createTable(ctx context.Context, adminClient *database.Data
 	s := fmt.Sprintf("CREATE TABLE  %s (YCSB_KEY STRING(%d)", tableName, fieldLength)
 	buf.WriteString(s)
 
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		buf.WriteString(fmt.Sprintf(", FIELD%d STRING(%d)", i, fieldLength))
 	}
 
@@ -257,8 +257,8 @@ func (db *spannerDB) queryRows(ctx context.Context, stmt spanner.Statement, coun
 
 		rowSize := row.Size()
 		m := make(map[string][]byte, rowSize)
-		dest := make([]interface{}, rowSize)
-		for i := 0; i < rowSize; i++ {
+		dest := make([]any, rowSize)
+		for i := range rowSize {
 			v := new(spanner.NullString)
 			dest[i] = v
 		}
@@ -267,7 +267,7 @@ func (db *spannerDB) queryRows(ctx context.Context, stmt spanner.Statement, coun
 			return nil, err
 		}
 
-		for i := 0; i < rowSize; i++ {
+		for i := range rowSize {
 			v := dest[i].(*spanner.NullString)
 			if v.Valid {
 				m[row.ColumnName(i)] = util.Slice(v.StringVal)
@@ -319,9 +319,9 @@ func (db *spannerDB) Scan(ctx context.Context, table string, startKey string, co
 	return rows, err
 }
 
-func createMutations(key string, mutations map[string][]byte) ([]string, []interface{}) {
+func createMutations(key string, mutations map[string][]byte) ([]string, []any) {
 	keys := make([]string, 0, 1+len(mutations))
-	values := make([]interface{}, 0, 1+len(mutations))
+	values := make([]any, 0, 1+len(mutations))
 	keys = append(keys, "YCSB_KEY")
 	values = append(values, key)
 

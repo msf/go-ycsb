@@ -31,6 +31,7 @@ package boltdb
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 
 	"github.com/boltdb/bolt"
@@ -178,9 +179,7 @@ func (db *boltDB) Update(ctx context.Context, table string, key string, values m
 			return err
 		}
 
-		for field, value := range values {
-			data[field] = value
-		}
+		maps.Copy(data, values)
 
 		buf := db.bufPool.Get()
 		defer func() {

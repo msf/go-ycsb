@@ -1,4 +1,4 @@
-FROM golang:1-alpine3.22
+FROM golang:1-alpine3.24
 
 ENV GOPATH /go
 
@@ -20,7 +20,7 @@ COPY . .
 
 RUN GO111MODULE=on go build -o /go-ycsb ./cmd/*
 
-FROM alpine:3.22
+FROM alpine:3.24
 
 COPY --from=0 /go-ycsb /go-ycsb
 COPY --from=0 /usr/local/bin/dumb-init /usr/local/bin/dumb-init

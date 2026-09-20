@@ -21,6 +21,7 @@ import (
 	"database/sql/driver"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"strings"
 	"sync/atomic"
 
@@ -46,13 +47,13 @@ const (
 )
 
 type muxDriver struct {
-	cursor    uint64
+	cursor    atomic.Uint64
 	instances []string
 	internal  driver.Driver
 }
 
 func (drv *muxDriver) Open(name string) (driver.Conn, error) {
-	k := atomic.AddUint64(&drv.cursor, 1)
+	k := drv.cursor.Add(1)
 	return drv.internal.Open(drv.instances[int(k)%len(drv.instances)])
 }
 
@@ -65,10 +66,8 @@ func openTiDBInstances(addrs []string, user string, pass string, db string) (*sq
 	}
 	digest := hash.Sum(nil)
 	driver := "tidb:" + hex.EncodeToString(digest[:])
-	for _, n := range sql.Drivers() {
-		if n == driver {
-			return sql.Open(driver, "")
-		}
+	if slices.Contains(sql.Drivers(), driver) {
+		return sql.Open(driver, "")
 	}
 	sql.Register(driver, &muxDriver{instances: instances, internal: &mysql.MySQLDriver{}})
 	return sql.Open(driver, "")
@@ -114,7 +113,7 @@ func (c mysqlCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 		err   error
 		tidbs []string
 	)
-	for _, tidb := range strings.Split(tidbList, ",") {
+	for tidb := range strings.SplitSeq(tidbList, ",") {
 		tidb = strings.TrimSpace(tidb)
 		if len(tidb) > 0 {
 			tidbs = append(tidbs, tidb)
@@ -169,7 +168,7 @@ func (db *mysqlDB) createTable(driverName string) error {
 		buf.WriteString(" /*T![clustered_index] CLUSTERED */")
 	}
 
-	for i := int64(0); i < fieldCount; i++ {
+	for i := range fieldCount {
 		buf.WriteString(fmt.Sprintf(", FIELD%d VARCHAR(%d)", i, fieldLength))
 	}
 
@@ -245,7 +244,7 @@ func (db *mysqlDB) clearCacheIfFailed(ctx context.Context, query string, err err
 	delete(state.stmtCache, query)
 }
 
-func (db *mysqlDB) queryRows(ctx context.Context, query string, count int, args ...interface{}) ([]map[string][]byte, error) {
+func (db *mysqlDB) queryRows(ctx context.Context, query string, count int, args ...any) ([]map[string][]byte, error) {
 	if db.verbose {
 		fmt.Printf("%s %v\n", query, args)
 	}
@@ -268,8 +267,8 @@ func (db *mysqlDB) queryRows(ctx context.Context, query string, count int, args 
 	vs := make([]map[string][]byte, 0, count)
 	for rows.Next() {
 		m := make(map[string][]byte, len(cols))
-		dest := make([]interface{}, len(cols))
-		for i := 0; i < len(cols); i++ {
+		dest := make([]any, len(cols))
+		for i := range cols {
 			v := new([]byte)
 			dest[i] = v
 		}
@@ -308,7 +307,7 @@ func (db *mysqlDB) Read(ctx context.Context, table string, key string, fields []
 }
 
 func (db *mysqlDB) BatchRead(ctx context.Context, table string, keys []string, fields []string) ([]map[string][]byte, error) {
-	args := make([]interface{}, 0, len(keys))
+	args := make([]any, 0, len(keys))
 	buf := db.bufPool.Get()
 	defer db.bufPool.Put(buf)
 	if len(fields) == 0 {
@@ -352,7 +351,7 @@ func (db *mysqlDB) Scan(ctx context.Context, table string, startKey string, coun
 	return rows, err
 }
 
-func (db *mysqlDB) execQuery(ctx context.Context, query string, args ...interface{}) error {
+func (db *mysqlDB) execQuery(ctx context.Context, query string, args ...any) error {
 	if db.verbose {
 		fmt.Printf("%s %v\n", query, args)
 	}
@@ -378,7 +377,7 @@ func (db *mysqlDB) Update(ctx context.Context, table string, key string, values 
 	buf.WriteString(" SET ")
 	firstField := true
 	pairs := util.NewFieldPairs(values)
-	args := make([]interface{}, 0, len(values)+1)
+	args := make([]any, 0, len(values)+1)
 	for _, p := range pairs {
 		if firstField {
 			firstField = false
@@ -409,7 +408,7 @@ func (db *mysqlDB) BatchUpdate(ctx context.Context, table string, keys []string,
 }
 
 func (db *mysqlDB) Insert(ctx context.Context, table string, key string, values map[string][]byte) error {
-	args := make([]interface{}, 0, 1+len(values))
+	args := make([]any, 0, 1+len(values))
 	args = append(args, key)
 
 	buf := bytes.NewBuffer(db.bufPool.Get())
@@ -429,7 +428,7 @@ func (db *mysqlDB) Insert(ctx context.Context, table string, key string, values 
 	}
 	buf.WriteString(") VALUES (?")
 
-	for i := 0; i < len(pairs); i++ {
+	for range pairs {
 		buf.WriteString(" ,?")
 	}
 
@@ -439,7 +438,7 @@ func (db *mysqlDB) Insert(ctx context.Context, table string, key string, values 
 }
 
 func (db *mysqlDB) BatchInsert(ctx context.Context, table string, keys []string, values []map[string][]byte) error {
-	args := make([]interface{}, 0, (1+len(values))*len(keys))
+	args := make([]any, 0, (1+len(values))*len(keys))
 	buf := db.bufPool.Get()
 	defer db.bufPool.Put(buf)
 	buf = append(buf, "INSERT IGNORE INTO "...)
@@ -484,7 +483,7 @@ func (db *mysqlDB) Delete(ctx context.Context, table string, key string) error {
 }
 
 func (db *mysqlDB) BatchDelete(ctx context.Context, table string, keys []string) error {
-	args := make([]interface{}, 0, len(keys))
+	args := make([]any, 0, len(keys))
 	buf := db.bufPool.Get()
 	defer db.bufPool.Put(buf)
 	buf = append(buf, fmt.Sprintf("DELETE FROM %s WHERE YCSB_KEY IN (", table)...)
