@@ -79,6 +79,7 @@ func (c sqliteCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 	v.Set("cache", cache)
 	v.Set("mode", mode)
 	v.Set("_journal_mode", journalMode)
+	v.Set("_synchronous", "FULL")
 	dsn := fmt.Sprintf("file:%s?%s", dbPath, v.Encode())
 	var err error
 	db, err := sql.Open("sqlite3", dsn)
@@ -93,6 +94,9 @@ func (c sqliteCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 	d.backoffMs = p.GetInt(sqliteOptimisticBackoffMs, 5)
 	d.verbose = p.GetBool(prop.Verbose, prop.VerboseDefault)
 	d.db = db
+	if err := d.configureLab(); err != nil {
+		return nil, err
+	}
 
 	d.bufPool = util.NewBufPool()
 
@@ -398,3 +402,33 @@ func init() {
 }
 
 var _ ycsb.BatchDB = (*sqliteDB)(nil)
+
+func (db *sqliteDB) configureLab() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if _, err := db.db.ExecContext(ctx, "PRAGMA page_size=4096; PRAGMA cache_size=-16384; PRAGMA mmap_size=0;"); err != nil {
+		return err
+	}
+	for _, setting := range []struct {
+		name string
+		want int
+	}{
+		{"page_size", 4096},
+		{"cache_size", -16384},
+		{"mmap_size", 0},
+		{"synchronous", 2},
+		{"wal_autocheckpoint", 1000},
+	} {
+		var actual int
+		if err := db.db.QueryRowContext(ctx, "PRAGMA "+setting.name).Scan(&actual); err != nil {
+			return err
+		}
+		if actual != setting.want {
+			return fmt.Errorf("lab setting %s=%d, want %d", setting.name, actual, setting.want)
+		}
+		if _, err := fmt.Fprintf(os.Stderr, "lab-setting %s=%d\n", setting.name, actual); err != nil {
+			return err
+		}
+	}
+	return nil
+}
