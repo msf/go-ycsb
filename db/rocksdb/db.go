@@ -93,18 +93,21 @@ func (c rocksDBCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 		return nil, err
 	}
 
+	writeOptions := gorocksdb.NewDefaultWriteOptions()
+	writeOptions.SetSync(true)
 	return &rocksDB{
 		p:         p,
 		db:        db,
 		r:         util.NewRowCodec(p),
 		bufPool:   util.NewBufPool(),
 		readOpts:  gorocksdb.NewDefaultReadOptions(),
-		writeOpts: gorocksdb.NewDefaultWriteOptions(),
+		writeOpts: writeOptions,
 	}, nil
 }
 
 func getTableOptions(p *properties.Properties) *gorocksdb.BlockBasedTableOptions {
 	tblOpts := gorocksdb.NewDefaultBlockBasedTableOptions()
+	tblOpts.SetBlockCache(gorocksdb.NewLRUCache(16 << 20))
 
 	tblOpts.SetBlockSize(p.GetInt(rocksdbBlockSize, 4<<10))
 	tblOpts.SetBlockSizeDeviation(p.GetInt(rocksdbBlockSizeDeviation, 10))
@@ -136,6 +139,7 @@ func getTableOptions(p *properties.Properties) *gorocksdb.BlockBasedTableOptions
 func getOptions(p *properties.Properties) *gorocksdb.Options {
 	opts := gorocksdb.NewDefaultOptions()
 	opts.SetCreateIfMissing(true)
+	opts.SetCompression(gorocksdb.NoCompression)
 
 	opts.SetAllowConcurrentMemtableWrites(p.GetBool(rocksdbAllowConcurrentMemtableWrites, true))
 	opts.SetAllowMmapReads(p.GetBool(rocsdbAllowMmapReads, false))
