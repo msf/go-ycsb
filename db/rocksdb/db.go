@@ -208,6 +208,7 @@ func (db *rocksDB) Scan(ctx context.Context, table string, startKey string, coun
 	for it = it; it.Valid() && i < count; it.Next() {
 		value := it.Value()
 		m, err := db.r.Decode(cloneValue(value), fields)
+		value.Free()
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +220,7 @@ func (db *rocksDB) Scan(ctx context.Context, table string, startKey string, coun
 		return nil, err
 	}
 
-	return res, nil
+	return res[:i], nil
 }
 
 func (db *rocksDB) Update(ctx context.Context, table string, key string, values map[string][]byte) error {
