@@ -411,6 +411,13 @@ func (db *sqliteDB) configureLab(journalMode string) error {
 	if _, err := db.db.ExecContext(ctx, "PRAGMA page_size=4096; PRAGMA cache_size=-16384; PRAGMA mmap_size=0;"); err != nil {
 		return err
 	}
+	var version string
+	if err := db.db.QueryRowContext(ctx, "SELECT sqlite_version()").Scan(&version); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(os.Stderr, "lab-setting sqlite_version=%s\n", version); err != nil {
+		return err
+	}
 	var actualJournalMode string
 	if err := db.db.QueryRowContext(ctx, "PRAGMA journal_mode").Scan(&actualJournalMode); err != nil {
 		return err
