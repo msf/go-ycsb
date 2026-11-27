@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"os"
 
+	gorocksdb "github.com/linxGnu/grocksdb"
 	"github.com/magiconair/properties"
 	"github.com/pingcap/go-ycsb/pkg/prop"
 	"github.com/pingcap/go-ycsb/pkg/util"
 	"github.com/pingcap/go-ycsb/pkg/ycsb"
-	"github.com/tecbot/gorocksdb"
 )
 
 // properties
@@ -140,8 +140,8 @@ func getOptions(p *properties.Properties) *gorocksdb.Options {
 	opts.SetAllowConcurrentMemtableWrites(p.GetBool(rocksdbAllowConcurrentMemtableWrites, true))
 	opts.SetAllowMmapReads(p.GetBool(rocsdbAllowMmapReads, false))
 	opts.SetAllowMmapWrites(p.GetBool(rocksdbAllowMmapWrites, false))
-	opts.SetArenaBlockSize(p.GetInt(rocksdbArenaBlockSize, 0))
-	opts.SetDbWriteBufferSize(p.GetInt(rocksdbDBWriteBufferSize, 0))
+	opts.SetArenaBlockSize(p.GetUint64(rocksdbArenaBlockSize, 0))
+	opts.SetDbWriteBufferSize(p.GetUint64(rocksdbDBWriteBufferSize, 0))
 	opts.SetHardPendingCompactionBytesLimit(p.GetUint64(rocksdbHardPendingCompactionBytesLimit, 256<<30))
 	opts.SetLevel0FileNumCompactionTrigger(p.GetInt(rocksdbLevel0FileNumCompactionTrigger, 4))
 	opts.SetLevel0SlowdownWritesTrigger(p.GetInt(rocksdbLevel0SlowdownWritesTrigger, 20))
@@ -149,11 +149,11 @@ func getOptions(p *properties.Properties) *gorocksdb.Options {
 	opts.SetMaxBytesForLevelBase(p.GetUint64(rocksdbMaxBytesForLevelBase, 256<<20))
 	opts.SetMaxBytesForLevelMultiplier(p.GetFloat64(rocksdbMaxBytesForLevelMultiplier, 10))
 	opts.SetMaxTotalWalSize(p.GetUint64(rocksdbMaxTotalWalSize, 0))
-	opts.SetMemtableHugePageSize(p.GetInt(rocksdbMemtableHugePageSize, 0))
+	opts.SetMemtableHugePageSize(p.GetUint64(rocksdbMemtableHugePageSize, 0))
 	opts.SetNumLevels(p.GetInt(rocksdbNumLevels, 7))
 	opts.SetUseDirectReads(p.GetBool(rocksdbUseDirectReads, false))
 	opts.SetUseFsync(p.GetBool(rocksdbUseFsync, false))
-	opts.SetWriteBufferSize(p.GetInt(rocksdbWriteBufferSize, 64<<20))
+	opts.SetWriteBufferSize(p.GetUint64(rocksdbWriteBufferSize, 64<<20))
 	opts.SetMaxWriteBufferNumber(p.GetInt(rocksdbMaxWriteBufferNumber, 2))
 	opts.SetWalDir(p.GetString(rocksdbWALDir, ""))
 
