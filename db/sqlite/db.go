@@ -94,7 +94,7 @@ func (c sqliteCreator) Create(p *properties.Properties) (ycsb.DB, error) {
 	d.backoffMs = p.GetInt(sqliteOptimisticBackoffMs, 5)
 	d.verbose = p.GetBool(prop.Verbose, prop.VerboseDefault)
 	d.db = db
-	if err := d.configureLab(); err != nil {
+	if err := d.configureLab(journalMode); err != nil {
 		return nil, err
 	}
 
@@ -403,10 +403,22 @@ func init() {
 
 var _ ycsb.BatchDB = (*sqliteDB)(nil)
 
-func (db *sqliteDB) configureLab() error {
+// configureLab applies the fixed lab settings and fails unless SQLite reports
+// each of them, including the journal mode the DSN requested.
+func (db *sqliteDB) configureLab(journalMode string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if _, err := db.db.ExecContext(ctx, "PRAGMA page_size=4096; PRAGMA cache_size=-16384; PRAGMA mmap_size=0;"); err != nil {
+		return err
+	}
+	var actualJournalMode string
+	if err := db.db.QueryRowContext(ctx, "PRAGMA journal_mode").Scan(&actualJournalMode); err != nil {
+		return err
+	}
+	if !strings.EqualFold(actualJournalMode, journalMode) {
+		return fmt.Errorf("lab setting journal_mode=%s, want %s", actualJournalMode, journalMode)
+	}
+	if _, err := fmt.Fprintf(os.Stderr, "lab-setting journal_mode=%s\n", strings.ToLower(actualJournalMode)); err != nil {
 		return err
 	}
 	for _, setting := range []struct {
